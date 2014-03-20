@@ -116,6 +116,18 @@ public class MTProto {
 
     private ExponentalBackoff exponentalBackoff;
 
+    public static class Injector {
+        protected void onTcpFixedThreadReconnect(MTProto mtProto, String host, int port, boolean useChecksum, TcpContextCallback tcpListener) {
+
+        }
+
+        public void onReceiveMTMessage(TLObject intMessage) {
+
+        }
+    }
+
+    public static Injector injector;
+
     public MTProto(AbsMTProtoState state, MTProtoCallback callback, CallWrapper callWrapper, int connectionsCount) {
         this.INSTANCE_INDEX = instanceIndex.incrementAndGet();
         this.TAG = "MTProto#" + INSTANCE_INDEX;
@@ -255,6 +267,7 @@ public class MTProto {
         }
         try {
             TLObject intMessage = protoContext.deserializeMessage(new ByteArrayInputStream(mtMessage.getContent()));
+            if(injector != null) injector.onReceiveMTMessage(intMessage);
             onMTProtoMessage(mtMessage.getMessageId(), intMessage);
         } catch (DeserializeException e) {
             onApiMessage(mtMessage.getContent());
@@ -789,6 +802,8 @@ public class MTProto {
                 ConnectionType type = connectionRate.tryConnection();
                 try {
                     TcpContext context = new TcpContext(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener);
+                    if(injector != null)
+                        injector.onTcpFixedThreadReconnect(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener);
                     if (isClosed) {
                         return;
                     }

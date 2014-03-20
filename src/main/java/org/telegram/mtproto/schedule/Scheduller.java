@@ -1,7 +1,5 @@
 package org.telegram.mtproto.schedule;
 
-import com.sun.jndi.url.iiop.iiopURLContext;
-import org.omg.PortableServer.ServantRetentionPolicy;
 import org.telegram.mtproto.CallWrapper;
 import org.telegram.mtproto.MTProto;
 import org.telegram.mtproto.log.Logger;
@@ -101,7 +99,15 @@ public class Scheduller {
         return 0;
     }
 
+    public interface Injector {
+        public int postMessageDelayed(TLObject object, boolean isRpc, long timeout, int delay, int contextId, boolean highPrioroty);
+    }
+
+    public static Injector injector;
+
     public int postMessageDelayed(TLObject object, boolean isRpc, long timeout, int delay, int contextId, boolean highPrioroty) {
+        if(injector != null)
+            injector.postMessageDelayed(object, isRpc, timeout, delay, contextId, highPrioroty);
         int id = messagesIds.incrementAndGet();
         SchedullerPackage schedullerPackage = new SchedullerPackage(id);
         schedullerPackage.object = object;
