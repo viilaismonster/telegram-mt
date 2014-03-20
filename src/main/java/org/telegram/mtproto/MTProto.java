@@ -124,6 +124,10 @@ public class MTProto {
         public void onReceiveMTMessage(TLObject intMessage) {
 
         }
+
+        public void onTcpFixedThreadFailed(MTProto mtProto, String host, int port, boolean useChecksum, TcpContextCallback tcpListener,Exception e) {
+
+        }
     }
 
     public static Injector injector;
@@ -801,9 +805,11 @@ public class MTProto {
 
                 ConnectionType type = connectionRate.tryConnection();
                 try {
-                    TcpContext context = new TcpContext(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener);
                     if(injector != null)
                         injector.onTcpFixedThreadReconnect(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener);
+                    
+                    TcpContext context = new TcpContext(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener);
+
                     if (isClosed) {
                         return;
                     }
@@ -816,6 +822,8 @@ public class MTProto {
                         scheduller.notifyAll();
                     }
                 } catch (IOException e) {
+                    if(injector != null)
+                        injector.onTcpFixedThreadFailed(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener,e);
                     Logger.e(TAG, e);
                     try {
                         exponentalBackoff.onFailure();
