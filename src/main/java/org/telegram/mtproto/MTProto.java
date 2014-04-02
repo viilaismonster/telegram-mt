@@ -805,14 +805,18 @@ public class MTProto {
 
                 ConnectionType type = connectionRate.tryConnection();
                 try {
-                    if(injector != null)
-                        injector.onTcpFixedThreadReconnect(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener);
-                    
                     TcpContext context = new TcpContext(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener);
 
                     if (isClosed) {
+                        if(injector != null)
+                            injector.onTcpFixedThreadFailed(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener, new IOException("closed"));
                         return;
                     }
+
+                    if(injector != null)
+                        injector.onTcpFixedThreadReconnect(MTProto.this, type.getHost(), type.getPort(), USE_CHECKSUM, tcpListener);
+
+
                     scheduller.postMessageDelayed(new MTPing(Entropy.generateRandomId()), false, PING_TIMEOUT, 0, context.getContextId(), false);
                     synchronized (contexts) {
                         contexts.add(context);
